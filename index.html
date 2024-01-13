@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>OBS RTX VSR Upscale</title>
+		<style>
+			body {
+				background-color: #000000; /* dark blue */
+				color: white; /* white text */
+				font-family: Arial, sans-serif; /* a modern-looking font */
+				display: flex;
+				flex-direction: column;
+				justify-content: center;
+				align-items: center;
+				height: 100vh;
+				margin: 0;
+				padding: 0;
+				box-sizing: border-box;
+			}
+
+			h1 {
+				margin-bottom: 20px;
+			}
+
+			#obs-video {
+				width: 80vw; /* 80% of viewport width */
+				height: 80vh; /* 80% of viewport height */
+				object-fit: contain; /* keep aspect ratio while scaling */
+			}
+
+			#fullscreen-button {
+				background-color: #3a4b6c; /* lighter blue */
+				border: none;
+				color: white;
+				padding: 10px 20px;
+				text-align: center;
+				text-decoration: none;
+				display: inline-block;
+				font-size: 16px;
+				margin: 4px 2px;
+				cursor: pointer;
+				border-radius: 4px;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>OBS <span style="color: #32cd32">RTX VSR</span> Upscale</h1>
+
+		<video id="obs-video" autoplay playsinline></video>
+
+		<button id="fullscreen-button">Go Fullscreen</button>
+
+		<script>
+			const videoElement = document.getElementById('obs-video');
+			const fullscreenButton = document.getElementById('fullscreen-button');
+
+			// Add an event listener to the fullscreen button
+			fullscreenButton.addEventListener('click', () => {
+				if (videoElement.requestFullscreen) {
+					videoElement.requestFullscreen();
+				} else if (videoElement.mozRequestFullScreen) {
+					// Firefox
+					videoElement.mozRequestFullScreen();
+				} else if (videoElement.webkitRequestFullscreen) {
+					// Chrome, Safari and Opera
+					videoElement.webkitRequestFullscreen();
+				} else if (videoElement.msRequestFullscreen) {
+					// IE/Edge
+					videoElement.msRequestFullscreen();
+				}
+			});
+
+			// Enumerate devices
+			navigator.mediaDevices
+				.enumerateDevices()
+				.then((devices) => {
+					const videoDevices = devices.filter(
+						(device) => device.kind === 'videoinput'
+					);
+
+					// Print out the labels of the video devices
+					console.log(videoDevices.map((device) => device.label));
+
+					const obsCamera = videoDevices.find((device) =>
+						device.label.includes('OBS Virtual Camera')
+					);
+
+					if (obsCamera) {
+						// If OBS Virtual Camera was found, capture it
+						navigator.mediaDevices
+							.getUserMedia({
+								video: { deviceId: { exact: obsCamera.deviceId } },
+							})
+							.then((stream) => {
+								videoElement.srcObject = stream;
+							})
+							.catch((error) => {
+								console.error('Error capturing OBS Virtual Camera', error);
+							});
+					} else {
+						console.error('OBS Virtual Camera not found');
+					}
+				})
+				.catch((error) => {
+					console.error('Error enumerating devices', error);
+				});
+		</script>
+	</body>
+</html>
